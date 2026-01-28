@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2c3e50">
+    <title>Markdown Editor</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📝 Markdown Editor</h1>
+            <div class="header-actions">
+                <button id="newBtn" class="btn" title="New File">
+                    <span>📄</span> New
+                </button>
+                <button id="openBtn" class="btn" title="Open File">
+                    <span>📂</span> Open
+                </button>
+                <button id="saveBtn" class="btn" title="Save File">
+                    <span>💾</span> Save
+                </button>
+                <button id="toggleBtn" class="btn" title="Toggle View Mode">
+                    <span>👁️</span> <span id="viewMode">Split</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="editor-container" id="editorContainer">
+            <div class="editor-pane" id="editorPane">
+                <div class="pane-header">Editor</div>
+                <textarea id="editor" placeholder="Start writing your markdown here..."></textarea>
+            </div>
+            <div class="preview-pane" id="previewPane">
+                <div class="pane-header">Preview</div>
+                <div id="preview" class="markdown-preview"></div>
+            </div>
+        </div>
+
+        <footer>
+            <span id="charCount">0 characters</span>
+            <span id="wordCount">0 words</span>
+            <span id="fileName">Untitled.md</span>
+        </footer>
+    </div>
+
+    <input type="file" id="fileInput" accept=".md,.markdown,.txt" style="display: none;">
+
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
