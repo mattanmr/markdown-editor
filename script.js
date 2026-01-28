@@ -246,6 +246,7 @@ syncScrollBtn.addEventListener('click', toggleSyncScroll);
 // Initialize
 loadFromStorage();
 updateStats();
+updateSyncScrollDisplay(); // Initialize sync button display
 
 // Auto-save every 30 seconds
 setInterval(saveToStorage, 30000);
