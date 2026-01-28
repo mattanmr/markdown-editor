@@ -162,9 +162,15 @@ function syncEditorToPreview() {
     if (!syncScroll || isScrolling || viewMode !== 'split') return;
     
     isScrolling = true;
-    const editorScrollPercentage = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
-    const previewScrollTop = editorScrollPercentage * (preview.scrollHeight - preview.clientHeight);
-    preview.scrollTop = previewScrollTop;
+    const editorScrollableHeight = editor.scrollHeight - editor.clientHeight;
+    const previewScrollableHeight = preview.scrollHeight - preview.clientHeight;
+    
+    // Only sync if both panes have scrollable content
+    if (editorScrollableHeight > 0 && previewScrollableHeight > 0) {
+        const editorScrollPercentage = editor.scrollTop / editorScrollableHeight;
+        const previewScrollTop = editorScrollPercentage * previewScrollableHeight;
+        preview.scrollTop = previewScrollTop;
+    }
     
     setTimeout(() => {
         isScrolling = false;
@@ -175,9 +181,15 @@ function syncPreviewToEditor() {
     if (!syncScroll || isScrolling || viewMode !== 'split') return;
     
     isScrolling = true;
-    const previewScrollPercentage = preview.scrollTop / (preview.scrollHeight - preview.clientHeight);
-    const editorScrollTop = previewScrollPercentage * (editor.scrollHeight - editor.clientHeight);
-    editor.scrollTop = editorScrollTop;
+    const previewScrollableHeight = preview.scrollHeight - preview.clientHeight;
+    const editorScrollableHeight = editor.scrollHeight - editor.clientHeight;
+    
+    // Only sync if both panes have scrollable content
+    if (previewScrollableHeight > 0 && editorScrollableHeight > 0) {
+        const previewScrollPercentage = preview.scrollTop / previewScrollableHeight;
+        const editorScrollTop = previewScrollPercentage * editorScrollableHeight;
+        editor.scrollTop = editorScrollTop;
+    }
     
     setTimeout(() => {
         isScrolling = false;
