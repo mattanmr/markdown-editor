@@ -10,6 +10,7 @@ marked.setOptions({
 let currentFile = null;
 let currentFileName = 'Untitled.md';
 let viewMode = 'split'; // 'split', 'editor', 'preview'
+let syncScroll = true; // Enable sync scrolling by default
 
 // DOM elements
 const editor = document.getElementById('editor');
@@ -19,6 +20,7 @@ const charCount = document.getElementById('charCount');
 const wordCount = document.getElementById('wordCount');
 const fileNameDisplay = document.getElementById('fileName');
 const viewModeDisplay = document.getElementById('viewMode');
+const syncScrollModeDisplay = document.getElementById('syncScrollMode');
 const fileInput = document.getElementById('fileInput');
 
 // Buttons
@@ -26,6 +28,7 @@ const newBtn = document.getElementById('newBtn');
 const openBtn = document.getElementById('openBtn');
 const saveBtn = document.getElementById('saveBtn');
 const toggleBtn = document.getElementById('toggleBtn');
+const syncScrollBtn = document.getElementById('syncScrollBtn');
 
 // Load saved content from localStorage
 function loadFromStorage() {
@@ -33,6 +36,13 @@ function loadFromStorage() {
     if (savedContent) {
         editor.value = savedContent;
         updatePreview();
+    }
+    
+    // Load sync scroll preference
+    const savedSyncScroll = localStorage.getItem('syncScroll');
+    if (savedSyncScroll !== null) {
+        syncScroll = savedSyncScroll === 'true';
+        updateSyncScrollDisplay();
     }
 }
 
@@ -133,6 +143,47 @@ function toggleViewMode() {
     }
 }
 
+// Toggle sync scrolling
+function toggleSyncScroll() {
+    syncScroll = !syncScroll;
+    localStorage.setItem('syncScroll', syncScroll);
+    updateSyncScrollDisplay();
+}
+
+// Update sync scroll display
+function updateSyncScrollDisplay() {
+    syncScrollModeDisplay.textContent = syncScroll ? 'Sync: On' : 'Sync: Off';
+}
+
+// Sync scrolling between editor and preview
+let isScrolling = false;
+
+function syncEditorToPreview() {
+    if (!syncScroll || isScrolling || viewMode !== 'split') return;
+    
+    isScrolling = true;
+    const editorScrollPercentage = editor.scrollTop / (editor.scrollHeight - editor.clientHeight);
+    const previewScrollTop = editorScrollPercentage * (preview.scrollHeight - preview.clientHeight);
+    preview.scrollTop = previewScrollTop;
+    
+    setTimeout(() => {
+        isScrolling = false;
+    }, 50);
+}
+
+function syncPreviewToEditor() {
+    if (!syncScroll || isScrolling || viewMode !== 'split') return;
+    
+    isScrolling = true;
+    const previewScrollPercentage = preview.scrollTop / (preview.scrollHeight - preview.clientHeight);
+    const editorScrollTop = previewScrollPercentage * (editor.scrollHeight - editor.clientHeight);
+    editor.scrollTop = editorScrollTop;
+    
+    setTimeout(() => {
+        isScrolling = false;
+    }, 50);
+}
+
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
     // Ctrl/Cmd + S: Save
@@ -172,10 +223,13 @@ document.addEventListener('keydown', (e) => {
 
 // Event listeners
 editor.addEventListener('input', updatePreview);
+editor.addEventListener('scroll', syncEditorToPreview);
+preview.addEventListener('scroll', syncPreviewToEditor);
 newBtn.addEventListener('click', newFile);
 openBtn.addEventListener('click', openFile);
 saveBtn.addEventListener('click', saveFile);
 toggleBtn.addEventListener('click', toggleViewMode);
+syncScrollBtn.addEventListener('click', toggleSyncScroll);
 
 // Initialize
 loadFromStorage();
@@ -190,3 +244,4 @@ console.log('  Ctrl/Cmd + S: Save file');
 console.log('  Ctrl/Cmd + O: Open file');
 console.log('  Ctrl/Cmd + N: New file');
 console.log('  Ctrl/Cmd + E: Toggle view mode');
+console.log('Sync scrolling: ' + (syncScroll ? 'Enabled' : 'Disabled'));
