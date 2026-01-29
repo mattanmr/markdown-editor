@@ -127,7 +127,7 @@ function toggleViewMode() {
     const currentIndex = modes.indexOf(viewMode);
     viewMode = modes[(currentIndex + 1) % modes.length];
     
-    editorContainer.className = '';
+    editorContainer.className = 'editor-container';
     
     switch (viewMode) {
         case 'editor':
