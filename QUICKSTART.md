@@ -50,8 +50,10 @@ Then open: http://localhost:8000
 ### Toolbar Buttons
 - 📄 **New** - Create a new file (Ctrl+N)
 - 📂 **Open** - Open an existing .md file (Ctrl+O)
-- 💾 **Save** - Download your markdown file (Ctrl+S)
+- 📁 **Folder** - Open a folder to auto-load all .md files (Ctrl+Shift+O) - *Chrome/Edge only*
+- 💾 **Save** - Save/download your markdown file (Ctrl+S)
 - 👁️ **View Mode** - Toggle between Split/Editor/Preview (Ctrl+E)
+- 🔄 **Sync** - Toggle scroll synchronization between editor and preview
 
 ### View Modes
 1. **Split View** - See editor and preview side-by-side (default)
@@ -67,9 +69,31 @@ Your work is automatically saved to your browser's local storage:
 ### Keyboard Shortcuts
 - `Ctrl/Cmd + S` - Save file
 - `Ctrl/Cmd + O` - Open file
+- `Ctrl/Cmd + Shift + O` - Open folder (Chrome/Edge only)
 - `Ctrl/Cmd + N` - New file
 - `Ctrl/Cmd + E` - Toggle view mode
 - `Tab` - Insert 4 spaces (in editor)
+
+## Folder Mode (Chrome/Edge Only)
+
+**NEW FEATURE!** Work with all your markdown files in one place:
+
+1. Click the **📁 Folder** button or press `Ctrl+Shift+O`
+2. Select a folder that contains `.md` or `.markdown` files
+3. The app will show all your files in a sidebar on the left
+4. Click any file to open it
+5. Changes are **automatically saved** back to the original file (1 second after you stop typing)
+6. Click the **✕** button at the top of the file list to close the folder
+
+**Benefits:**
+- No need to manually open/save files
+- Switch between files instantly
+- Perfect for managing a documentation folder or personal notes
+- All changes are saved automatically to the original files
+
+**Requirements:**
+- Chrome 86+ or Edge 86+ (uses File System Access API)
+- You'll be asked to grant permission to access the folder
 
 ## Markdown Syntax Quick Reference
 

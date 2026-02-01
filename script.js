@@ -67,19 +67,17 @@ function updatePreview() {
     // Save to localStorage for non-folder mode
     if (!currentFileHandle) {
         saveToStorage();
-    }
-}
-
-// Auto-save to file handle (debounced)
-let autoSaveTimeout = null;
-editor.addEventListener('input', () => {
-    if (currentFileHandle) {
+    } else {
+        // Auto-save to file handle (debounced) when in folder mode
         clearTimeout(autoSaveTimeout);
         autoSaveTimeout = setTimeout(() => {
             saveToFileHandle();
         }, 1000); // Save 1 second after user stops typing
     }
-});
+}
+
+// Auto-save timeout for folder mode
+let autoSaveTimeout = null;
 
 // Update statistics
 function updateStats() {
