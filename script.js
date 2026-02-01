@@ -11,6 +11,9 @@ let currentFile = null;
 let currentFileName = 'Untitled.md';
 let viewMode = 'split'; // 'split', 'editor', 'preview'
 let syncScroll = true; // Enable sync scrolling by default
+let folderHandle = null; // Directory handle for folder mode
+let fileHandles = {}; // Map of filename to file handle
+let currentFileHandle = null; // Currently open file handle
 
 // DOM elements
 const editor = document.getElementById('editor');
@@ -22,13 +25,17 @@ const fileNameDisplay = document.getElementById('fileName');
 const viewModeDisplay = document.getElementById('viewMode');
 const syncScrollModeDisplay = document.getElementById('syncScrollMode');
 const fileInput = document.getElementById('fileInput');
+const fileList = document.getElementById('fileList');
+const fileListContent = document.getElementById('fileListContent');
 
 // Buttons
 const newBtn = document.getElementById('newBtn');
 const openBtn = document.getElementById('openBtn');
+const openFolderBtn = document.getElementById('openFolderBtn');
 const saveBtn = document.getElementById('saveBtn');
 const toggleBtn = document.getElementById('toggleBtn');
 const syncScrollBtn = document.getElementById('syncScrollBtn');
+const closeFolderBtn = document.getElementById('closeFolderBtn');
 
 // Load saved content from localStorage
 function loadFromStorage() {
@@ -56,8 +63,23 @@ function updatePreview() {
     const markdown = editor.value;
     preview.innerHTML = marked.parse(markdown);
     updateStats();
-    saveToStorage();
+    
+    // Save to localStorage for non-folder mode
+    if (!currentFileHandle) {
+        saveToStorage();
+    }
 }
+
+// Auto-save to file handle (debounced)
+let autoSaveTimeout = null;
+editor.addEventListener('input', () => {
+    if (currentFileHandle) {
+        clearTimeout(autoSaveTimeout);
+        autoSaveTimeout = setTimeout(() => {
+            saveToFileHandle();
+        }, 1000); // Save 1 second after user stops typing
+    }
+});
 
 // Update statistics
 function updateStats() {
@@ -109,6 +131,13 @@ fileInput.addEventListener('change', (e) => {
 
 // Save file
 function saveFile() {
+    // If we have a file handle (folder mode), write to it
+    if (currentFileHandle) {
+        saveToFileHandle();
+        return;
+    }
+    
+    // Otherwise, download as new file (traditional mode)
     const content = editor.value;
     const blob = new Blob([content], { type: 'text/markdown' });
     const url = URL.createObjectURL(blob);
@@ -119,6 +148,133 @@ function saveFile() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+}
+
+// Save content to file handle
+async function saveToFileHandle() {
+    if (!currentFileHandle) return;
+    
+    try {
+        const writable = await currentFileHandle.createWritable();
+        await writable.write(editor.value);
+        await writable.close();
+        console.log('File saved:', currentFileName);
+    } catch (err) {
+        console.error('Failed to save file:', err);
+        alert('Failed to save file. Please check permissions.');
+    }
+}
+
+// Open folder
+async function openFolder() {
+    // Check if File System Access API is supported
+    if (!('showDirectoryPicker' in window)) {
+        alert('Your browser does not support folder access. Please use Chrome, Edge, or another Chromium-based browser.');
+        return;
+    }
+    
+    try {
+        folderHandle = await window.showDirectoryPicker({
+            mode: 'readwrite'
+        });
+        
+        await loadFilesFromFolder();
+        fileList.style.display = 'flex';
+    } catch (err) {
+        if (err.name !== 'AbortError') {
+            console.error('Failed to open folder:', err);
+            alert('Failed to open folder: ' + err.message);
+        }
+    }
+}
+
+// Load all markdown files from folder
+async function loadFilesFromFolder() {
+    if (!folderHandle) return;
+    
+    fileHandles = {};
+    fileListContent.innerHTML = '';
+    
+    try {
+        const files = [];
+        
+        for await (const entry of folderHandle.values()) {
+            if (entry.kind === 'file') {
+                const name = entry.name;
+                if (name.endsWith('.md') || name.endsWith('.markdown')) {
+                    files.push({ name, handle: entry });
+                }
+            }
+        }
+        
+        // Sort files alphabetically
+        files.sort((a, b) => a.name.localeCompare(b.name));
+        
+        // Display files
+        for (const { name, handle } of files) {
+            fileHandles[name] = handle;
+            
+            const fileItem = document.createElement('div');
+            fileItem.className = 'file-item';
+            fileItem.innerHTML = `<span class="file-item-name" title="${name}">${name}</span>`;
+            fileItem.addEventListener('click', () => loadFileFromHandle(name, handle));
+            fileListContent.appendChild(fileItem);
+        }
+        
+        // Load first file if available
+        if (files.length > 0) {
+            loadFileFromHandle(files[0].name, files[0].handle);
+        } else {
+            alert('No markdown files found in the selected folder.');
+        }
+    } catch (err) {
+        console.error('Failed to load files:', err);
+        alert('Failed to load files from folder.');
+    }
+}
+
+// Load a specific file from handle
+async function loadFileFromHandle(fileName, handle) {
+    try {
+        const file = await handle.getFile();
+        const content = await file.text();
+        
+        editor.value = content;
+        currentFileName = fileName;
+        currentFileHandle = handle;
+        fileNameDisplay.textContent = fileName;
+        
+        updatePreview();
+        updateActiveFileItem(fileName);
+    } catch (err) {
+        console.error('Failed to load file:', err);
+        alert('Failed to load file: ' + fileName);
+    }
+}
+
+// Update active file in list
+function updateActiveFileItem(fileName) {
+    const items = fileListContent.querySelectorAll('.file-item');
+    items.forEach(item => {
+        const name = item.querySelector('.file-item-name').textContent;
+        if (name === fileName) {
+            item.classList.add('active');
+        } else {
+            item.classList.remove('active');
+        }
+    });
+}
+
+// Close folder
+function closeFolder() {
+    folderHandle = null;
+    fileHandles = {};
+    currentFileHandle = null;
+    fileList.style.display = 'none';
+    fileListContent.innerHTML = '';
+    
+    // Reset to default state
+    newFile();
 }
 
 // Toggle view mode
@@ -205,9 +361,15 @@ document.addEventListener('keydown', (e) => {
     }
     
     // Ctrl/Cmd + O: Open
-    if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'o' && !e.shiftKey) {
         e.preventDefault();
         openFile();
+    }
+    
+    // Ctrl/Cmd + Shift + O: Open Folder
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'O') {
+        e.preventDefault();
+        openFolder();
     }
     
     // Ctrl/Cmd + N: New
@@ -239,9 +401,11 @@ editor.addEventListener('scroll', syncEditorToPreview);
 preview.addEventListener('scroll', syncPreviewToEditor);
 newBtn.addEventListener('click', newFile);
 openBtn.addEventListener('click', openFile);
+openFolderBtn.addEventListener('click', openFolder);
 saveBtn.addEventListener('click', saveFile);
 toggleBtn.addEventListener('click', toggleViewMode);
 syncScrollBtn.addEventListener('click', toggleSyncScroll);
+closeFolderBtn.addEventListener('click', closeFolder);
 
 // Initialize
 loadFromStorage();
@@ -255,6 +419,7 @@ console.log('Markdown Editor initialized');
 console.log('Keyboard shortcuts:');
 console.log('  Ctrl/Cmd + S: Save file');
 console.log('  Ctrl/Cmd + O: Open file');
+console.log('  Ctrl/Cmd + Shift + O: Open folder');
 console.log('  Ctrl/Cmd + N: New file');
 console.log('  Ctrl/Cmd + E: Toggle view mode');
 console.log('Sync scrolling: ' + (syncScroll ? 'Enabled' : 'Disabled'));

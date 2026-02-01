@@ -19,6 +19,9 @@
                 <button id="openBtn" class="btn" title="Open File">
                     <span>📂</span> Open
                 </button>
+                <button id="openFolderBtn" class="btn" title="Open Folder">
+                    <span>📁</span> Folder
+                </button>
                 <button id="saveBtn" class="btn" title="Save File">
                     <span>💾</span> Save
                 </button>
@@ -32,6 +35,13 @@
         </header>
 
         <div class="editor-container" id="editorContainer">
+            <div class="file-list" id="fileList" style="display: none;">
+                <div class="pane-header">
+                    Files
+                    <button id="closeFolderBtn" class="close-folder-btn" title="Close Folder">✕</button>
+                </div>
+                <div id="fileListContent"></div>
+            </div>
             <div class="editor-pane" id="editorPane">
                 <div class="pane-header">Editor</div>
                 <textarea id="editor" placeholder="Start writing your markdown here..."></textarea>
