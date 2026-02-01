@@ -14,6 +14,7 @@ let syncScroll = true; // Enable sync scrolling by default
 let folderHandle = null; // Directory handle for folder mode
 let fileHandles = {}; // Map of filename to file handle
 let currentFileHandle = null; // Currently open file handle
+let autoSaveTimeout = null; // Auto-save timeout for folder mode
 
 // DOM elements
 const editor = document.getElementById('editor');
@@ -75,9 +76,6 @@ function updatePreview() {
         }, 1000); // Save 1 second after user stops typing
     }
 }
-
-// Auto-save timeout for folder mode
-let autoSaveTimeout = null;
 
 // Update statistics
 function updateStats() {
@@ -214,7 +212,11 @@ async function loadFilesFromFolder() {
             
             const fileItem = document.createElement('div');
             fileItem.className = 'file-item';
-            fileItem.innerHTML = `<span class="file-item-name" title="${name}">${name}</span>`;
+            const fileItemName = document.createElement('span');
+            fileItemName.className = 'file-item-name';
+            fileItemName.title = name;
+            fileItemName.textContent = name; // Use textContent to prevent XSS
+            fileItem.appendChild(fileItemName);
             fileItem.addEventListener('click', () => loadFileFromHandle(name, handle));
             fileListContent.appendChild(fileItem);
         }
@@ -365,7 +367,7 @@ document.addEventListener('keydown', (e) => {
     }
     
     // Ctrl/Cmd + Shift + O: Open Folder
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'O') {
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'o') {
         e.preventDefault();
         openFolder();
     }
